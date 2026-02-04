@@ -1,0 +1,8 @@
+# azure-aks-live/.gitignore
+*.tfplan
+*.tfplan.binary
+tfplan
+.terraform/
+.terragrunt-cache/
+*.tfstate
+*.tfstate.backup
