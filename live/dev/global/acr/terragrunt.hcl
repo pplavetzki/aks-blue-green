@@ -18,6 +18,11 @@ terraform {
 
 dependency "resource_group" {
   config_path = "../resource-group"
+  
+  mock_outputs = {
+    name = "rg-aks-dev-global"
+  }
+  mock_outputs_allowed_terraform_commands = ["destroy", "plan"]
 }
 
 inputs = {

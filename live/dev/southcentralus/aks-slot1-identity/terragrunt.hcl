@@ -10,34 +10,33 @@ locals {
   location       = local.region_vars.locals.location
   location_short = local.region_vars.locals.location_short
   common_tags    = local.env_vars.locals.common_tags
+  
+  slot_name = "slot1"
 }
 
 terraform {
-  source = "/home/pplavetzki/development/practice/terraform/azure-aks-terraform/modules/kv"
+  source = "/home/pplavetzki/development/practice/terraform/azure-aks-terraform/modules/managed-identity"
 }
 
-dependency "resource_group" {
-  config_path = "../resource-group"
+dependency "network" {
+  config_path = "../virtual-network"
   
   mock_outputs = {
-    name = "rg-aks-dev-global"
+    resource_group_name = "rg-aks-dev-scus"
   }
   mock_outputs_allowed_terraform_commands = ["destroy", "plan"]
 }
 
 inputs = {
-  resource_group_name = dependency.resource_group.outputs.name
+  identity_name       = "id-aks-${local.environment}-${local.location_short}-${local.slot_name}"
+  resource_group_name = dependency.network.outputs.resource_group_name
   location            = local.location
-  keyvault_name       = "kv-aks-${local.environment}-${local.location_short}"
-  sku_name            = "standard"
-  soft_delete_retention_days = 7
-  purge_protection_enabled   = false
-  default_network_action     = "Allow"
   
   tags = merge(
     local.common_tags,
     {
-      Component = "Secrets Management"
+      Component = "AKS Identity"
+      Slot      = local.slot_name
     }
   )
 }
