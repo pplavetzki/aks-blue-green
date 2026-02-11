@@ -1,4 +1,9 @@
 .PHONY: destroy-all destroy-global destroy-network destroy-aks destroy-aks-rbac destroy-aks-identity clean help
+.PHONY: deploy-nginx get-kubeconfig install-nginx-ingress deploy-nginx-app get-nginx-ip undeploy-nginx
+
+# ============================================================================
+# INFRASTRUCTURE TARGETS
+# ============================================================================
 
 # Destroy everything in correct dependency order
 destroy-all: destroy-aks destroy-aks-rbac destroy-aks-identity destroy-network destroy-regional-rg destroy-global clean
@@ -45,11 +50,6 @@ destroy-global-rg:
 	@echo "Destroying global resource group..."
 	-cd live/dev/global/resource-group && terragrunt destroy -auto-approve
 
-# Clean local state
-clean:
-	@echo "Cleaning local Terraform state..."
-	find live/dev -type d -name ".terragrunt-cache" -exec rm -rf {} + 2>/dev/null || true
-
 create-all: create-global create-network create-aks-identity create-aks create-aks-rbac
 	@echo "✓ All resources created"
 
@@ -85,10 +85,86 @@ clean:
 	find . -type f -name ".terraform.lock.hcl" -delete 2>/dev/null || true
 	@echo "✓ Local cache cleaned"
 
-# Help
+# ============================================================================
+# KUBERNETES DEPLOYMENT TARGETS
+# ============================================================================
+
+# Get kubeconfig and deploy NGINX
+deploy-nginx: get-kubeconfig install-nginx-ingress deploy-nginx-app
+	@echo ""
+	@echo "✓ NGINX deployed and accessible"
+
+# Get AKS credentials
+get-kubeconfig:
+	@echo "Getting AKS credentials..."
+	az aks get-credentials \
+		--resource-group rg-aks-dev-scus \
+		--name aks-dev-scus-slot1 \
+		--overwrite-existing \
+		--admin
+	@echo "✓ Kubeconfig updated"
+
+# Install NGINX Ingress Controller via Helm
+install-nginx-ingress:
+	@echo "Installing NGINX Ingress Controller..."
+	helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+	helm repo update
+	helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx \
+		--namespace ingress-nginx \
+		--create-namespace \
+		--set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+		--wait
+	@echo "✓ NGINX Ingress Controller installed"
+
+# Deploy sample NGINX application
+deploy-nginx-app:
+	@echo "Deploying sample NGINX application..."
+	kubectl apply -f k8s/nginx-demo.yaml
+	@echo "Waiting for LoadBalancer IP..."
+	@bash -c 'while [ -z "$$(kubectl get svc nginx-ingress-ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)" ]; do echo "Waiting..."; sleep 5; done'
+	@echo ""
+	@echo "✓ NGINX deployed successfully!"
+	@echo ""
+	@echo "Access your application at:"
+	@echo "  http://$$(kubectl get svc nginx-ingress-ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+
+# Get ingress IP
+get-nginx-ip:
+	@echo "NGINX Ingress IP:"
+	@kubectl get svc nginx-ingress-ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+	@echo ""
+
+# Remove NGINX App
+remove-nginx-app:
+	@echo "Removing NGINX application..."
+	-kubectl delete -f k8s/nginx-demo.yaml
+	@echo "✓ NGINX application removed"
+
+# Remove NGINX deployment
+undeploy-nginx:
+	@echo "Removing NGINX application..."
+	-kubectl delete -f k8s/nginx-demo.yaml
+	@echo "Uninstalling NGINX Ingress Controller..."
+	-helm uninstall nginx-ingress -n ingress-nginx
+	-kubectl delete namespace ingress-nginx
+	@echo "✓ NGINX removed"
+
+# ============================================================================
+# HELP
+# ============================================================================
+
 help:
 	@echo "Available targets:"
+	@echo ""
+	@echo "Infrastructure:"
+	@echo "  make create-all      - Create all infrastructure"
 	@echo "  make destroy-all     - Destroy all resources in correct order"
 	@echo "  make destroy-global  - Destroy only global resources"
 	@echo "  make destroy-network - Destroy only network resources"
-	@echo "  make clean          - Clean local Terragrunt cache"
+	@echo "  make clean           - Clean local Terragrunt cache"
+	@echo ""
+	@echo "Kubernetes:"
+	@echo "  make deploy-nginx    - Deploy NGINX with ingress controller"
+	@echo "  make get-nginx-ip    - Show NGINX ingress public IP"
+	@echo "  make undeploy-nginx  - Remove NGINX deployment"
+	@echo "  make get-kubeconfig  - Get AKS cluster credentials"
