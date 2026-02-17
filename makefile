@@ -6,8 +6,14 @@
 # ============================================================================
 
 # Destroy everything in correct dependency order
-destroy-all: destroy-aks destroy-aks-rbac destroy-aks-identity destroy-network destroy-regional-rg destroy-global clean
+# Add to destroy-all target (after destroy-aks-identity):
+destroy-all: destroy-aks destroy-aks-rbac destroy-aks-identity destroy-kv-pe destroy-network destroy-regional-rg destroy-global clean
 	@echo "✓ All resources destroyed"
+
+# Add new target:
+destroy-kv-pe:
+	@echo "Destroying Key Vault private endpoint..."
+	-cd live/dev/southcentralus/kv-private-endpoint && terragrunt destroy -auto-approve
 
 # Destroy AKS cluster first
 destroy-aks:
@@ -50,8 +56,12 @@ destroy-global-rg:
 	@echo "Destroying global resource group..."
 	-cd live/dev/global/resource-group && terragrunt destroy -auto-approve
 
-create-all: create-global create-network create-aks-identity create-aks create-aks-rbac
+create-all: create-global create-network create-aks-identity create-aks create-aks-rbac create-kv-pe
 	@echo "✓ All resources created"
+
+create-kv-pe:
+	@echo "Creating Key Vault private endpoint..."
+	cd live/dev/southcentralus/kv-private-endpoint && terragrunt apply -auto-approve
 
 create-global:
 	@echo "Creating global resource group..."
