@@ -10,6 +10,9 @@ locals {
   location       = local.region_vars.locals.location
   location_short = local.region_vars.locals.location_short
   common_tags    = local.env_vars.locals.common_tags
+
+  # TODO: Replace with your deployment IP - get via: curl ifconfig.me
+  deployment_ip = "YOUR_IP_HERE"
 }
 
 terraform {
@@ -26,12 +29,14 @@ dependency "resource_group" {
 }
 
 inputs = {
-  resource_group_name = dependency.resource_group.outputs.name
-  location            = local.location
-  acr_name            = "acraks${local.environment}${local.location_short}"
-  sku                 = "Basic"
-  admin_enabled       = false
-  
+  resource_group_name    = dependency.resource_group.outputs.name
+  location               = local.location
+  acr_name               = "acraks${local.environment}${local.location_short}"
+  sku                    = "Premium"
+  admin_enabled          = false
+  default_network_action = "Deny"
+  allowed_ip_ranges      = [local.deployment_ip]
+
   tags = merge(
     local.common_tags,
     {
