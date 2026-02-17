@@ -10,6 +10,9 @@ locals {
   location       = local.region_vars.locals.location
   location_short = local.region_vars.locals.location_short
   common_tags    = local.env_vars.locals.common_tags
+  
+  # TODO: Replace with your deployment IP - get via: curl ifconfig.me
+  deployment_ip = "136.62.145.185/32"  # <-- ADD YOUR IP HERE
 }
 
 terraform {
@@ -32,7 +35,9 @@ inputs = {
   sku_name            = "standard"
   soft_delete_retention_days = 7
   purge_protection_enabled   = false
-  default_network_action     = "Allow"
+  default_network_action     = "Deny"                    # <-- CHANGED
+  allowed_ip_ranges          = [local.deployment_ip]     # <-- ADDED
+  rbac_authorization_enabled = true                     # <-- ADDED
   
   tags = merge(
     local.common_tags,
@@ -40,4 +45,11 @@ inputs = {
       Component = "Secrets Management"
     }
   )
+
+  secrets = {
+    "db-connection-string" = "Server=localhost;Database=test"
+    "api-key"              = "test-api-key-12345"
+    "app-secret"           = "my-test-secret"
+  }
+
 }
