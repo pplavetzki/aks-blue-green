@@ -44,6 +44,9 @@ inputs = {
   subnet_id                      = dependency.network.outputs.subnet_ids["snet-private-endpoints"]
   private_connection_resource_id = dependency.kv.outputs.keyvault_id
   subresource_names              = ["vault"]
+  create_dns_zone                = true
+  private_dns_zone_name          = "privatelink.vaultcore.azure.net"
+  virtual_network_id             = dependency.network.outputs.vnet_id
   
   tags = merge(
     local.common_tags,

@@ -12,7 +12,7 @@ locals {
   common_tags    = local.env_vars.locals.common_tags
 
   # TODO: Replace with your deployment IP - get via: curl ifconfig.me
-  deployment_ip = "YOUR_IP_HERE"
+  deployment_ip = local.env_vars.locals.deploymente_id
 }
 
 terraform {
@@ -28,6 +28,18 @@ dependency "resource_group" {
   mock_outputs_allowed_terraform_commands = ["destroy", "plan"]
 }
 
+dependency "network" {
+  config_path = "../../southcentralus/virtual-network"
+
+  mock_outputs = {
+    subnet_ids = {
+      "snet-aks-slot1-apps"   = "/subscriptions/mock/resourceGroups/mock/providers/Microsoft.Network/virtualNetworks/mock/subnets/mock"
+      "snet-aks-slot1-system" = "/subscriptions/mock/resourceGroups/mock/providers/Microsoft.Network/virtualNetworks/mock/subnets/mock"
+    }
+  }
+  mock_outputs_allowed_terraform_commands = ["destroy", "plan"]
+}
+
 inputs = {
   resource_group_name    = dependency.resource_group.outputs.name
   location               = local.location
@@ -36,6 +48,10 @@ inputs = {
   admin_enabled          = false
   default_network_action = "Deny"
   allowed_ip_ranges      = [local.deployment_ip]
+  allowed_subnet_ids     = [
+    dependency.network.outputs.subnet_ids["snet-aks-slot1-apps"],
+    dependency.network.outputs.subnet_ids["snet-aks-slot1-system"],
+  ]
 
   tags = merge(
     local.common_tags,

@@ -54,9 +54,11 @@ inputs = {
     # ==========================================================================
     "snet-aks-slot1-system" = {
       address_prefix = "10.0.0.0/24"
+      service_endpoints = ["Microsoft.KeyVault", "Microsoft.ContainerRegistry"]
     }
     "snet-aks-slot1-apps" = {
       address_prefix = "10.0.2.0/23"
+      service_endpoints = ["Microsoft.KeyVault", "Microsoft.ContainerRegistry"]
     }
     
     # ==========================================================================

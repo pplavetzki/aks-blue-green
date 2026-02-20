@@ -27,11 +27,11 @@ dependency "acr" {
 
 dependency "network" {
   config_path = "../virtual-network"
-  
   mock_outputs = {
     resource_group_name = "rg-aks-dev-scus"
+    vnet_id             = "/subscriptions/mock/resourceGroups/mock/providers/Microsoft.Network/virtualNetworks/mock"
     subnet_ids = {
-      "snet-private-endpoints" = "/subscriptions/mock/resourceGroups/mock/providers/Microsoft.Network/virtualNetworks/mock/subnets/mock"
+      "snet-private-endpoints" = "/subscriptions/mock/..."
     }
   }
   mock_outputs_allowed_terraform_commands = ["destroy", "plan"]
@@ -44,6 +44,11 @@ inputs = {
   subnet_id                      = dependency.network.outputs.subnet_ids["snet-private-endpoints"]
   private_connection_resource_id = dependency.acr.outputs.acr_id
   subresource_names              = ["registry"]
+  public_network_access_enabled = true   # <-- ADD
+  default_network_action        = "Deny" # <-- ADD
+  create_dns_zone               = true
+  private_dns_zone_name         = "privatelink.azurecr.io"
+  virtual_network_id            = dependency.network.outputs.vnet_id
 
   tags = merge(
     local.common_tags,

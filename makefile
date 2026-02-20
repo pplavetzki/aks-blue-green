@@ -2,6 +2,30 @@
 .PHONY: deploy-nginx get-kubeconfig install-nginx-ingress deploy-nginx-app get-nginx-ip undeploy-nginx
 
 # ============================================================================
+# CONTAINER IMAGE TARGETS
+# ============================================================================
+
+ACR_NAME    = acraksdevscus
+IMAGE_NAME  = kv-secret-test
+IMAGE_TAG   ?= latest
+ACR_SERVER  ?= $(shell az acr show --name $(ACR_NAME) --query loginServer -o tsv)
+
+docker-login:
+	@echo "Logging into ACR..."
+	az acr login --name $(ACR_NAME)
+
+docker-build:
+	@echo "Building image..."
+	docker build -t $(ACR_SERVER)/$(IMAGE_NAME):$(IMAGE_TAG) ./validation/keyvault-access
+
+docker-push:
+	@echo "Pushing image to ACR..."
+	docker push $(ACR_SERVER)/$(IMAGE_NAME):$(IMAGE_TAG)
+
+docker-build-push: docker-login docker-build docker-push
+	@echo "✓ Image built and pushed: $(ACR_SERVER)/$(IMAGE_NAME):$(IMAGE_TAG)"
+
+# ============================================================================
 # INFRASTRUCTURE TARGETS
 # ============================================================================
 
@@ -60,8 +84,8 @@ destroy-global-rg:
 	@echo "Destroying global resource group..."
 	-cd live/dev/global/resource-group && terragrunt destroy -auto-approve
 
-create-all: create-global create-network create-aks-identity create-aks create-aks-rbac create-kv-pe create-acr-pe
-	@echo "✓ All resources created"
+create-all: create-network create-global create-aks-identity create-aks create-aks-rbac create-kv-pe create-acr-pe
+	@echo "✓ All resources created"	@echo "✓ All resources created"
 
 create-kv-pe:
 	@echo "Creating Key Vault private endpoint..."
@@ -94,6 +118,10 @@ create-aks-rbac:
 create-aks:
 	@echo "Creating AKS Slot 1..."
 	cd live/dev/southcentralus/aks-slot1 && terragrunt apply -auto-approve
+
+create-k8s-test:
+	@echo "Creating k8s test"
+	cd live/dev/southcentralus/k8s-secret-test && terragrunt apply -auto-approve
 
 # Clean local Terragrunt cache
 clean:
@@ -186,3 +214,7 @@ help:
 	@echo "  make get-nginx-ip    - Show NGINX ingress public IP"
 	@echo "  make undeploy-nginx  - Remove NGINX deployment"
 	@echo "  make get-kubeconfig  - Get AKS cluster credentials"
+	@echo ""
+	@echo "Container:"
+	@echo "  make docker-build-push  - Build and push kv-secret-test image to ACR"
+	@echo "  make docker-login       - Login to ACR"

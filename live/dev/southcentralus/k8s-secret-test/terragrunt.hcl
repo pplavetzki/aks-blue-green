@@ -13,7 +13,7 @@ locals {
 }
 
 terraform {
-  source = "/home/pplavetzki/development/practice/terraform/azure-aks-terraform/modules/kv-secret-test"
+  source = "/home/pplavetzki/development/practice/terraform/azure-aks-terraform/modules/k8s-secret-test"
 }
 
 dependency "aks" {
@@ -60,7 +60,7 @@ inputs = {
   resource_group_name           = dependency.network.outputs.resource_group_name
   keyvault_name                 = dependency.kv.outputs.keyvault_name
   kv_secrets_provider_client_id = dependency.aks.outputs.key_vault_secrets_provider.client_id
-  tenant_id                     = local.env_vars.locals.subscription_id  # swap for tenant_id if you add it to env.hcl
+  tenant_id                     = local.env_vars.locals.tenant_id
   acr_login_server              = dependency.acr.outputs.acr_login_server
   namespace                     = "demo"
 }
