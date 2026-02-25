@@ -66,12 +66,12 @@ inputs = {
     # Address Range: 10.0.10.0 - 10.0.13.255
     # Status: Not deployed - Uncomment when ready for blue/green deployment
     # ==========================================================================
-    # "snet-aks-slot2-system" = {
-    #   address_prefix = "10.0.10.0/24"
-    # }
-    # "snet-aks-slot2-apps" = {
-    #   address_prefix = "10.0.12.0/23"
-    # }
+    "snet-aks-slot2-system" = {
+      address_prefix = "10.0.10.0/24"
+    }
+    "snet-aks-slot2-apps" = {
+      address_prefix = "10.0.12.0/23"
+    }
     
     # ==========================================================================
     # SHARED INFRASTRUCTURE - Always active, used by both deployment slots

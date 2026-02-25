@@ -11,7 +11,7 @@ locals {
   location_short = local.region_vars.locals.location_short
   common_tags    = local.env_vars.locals.common_tags
   
-  slot_name = "slot1"
+  slot_name = "slot2"
 }
 
 terraform {
@@ -19,7 +19,7 @@ terraform {
 }
 
 dependency "aks" {
-  config_path = "../aks-slot1"
+  config_path = "../aks-slot2"
   
   mock_outputs = {
     kubelet_identity = {
@@ -51,7 +51,7 @@ dependency "kv" {
 }
 
 dependency "identity" {
-  config_path = "../aks-slot1-identity"
+  config_path = "../aks-slot2-identity"
   mock_outputs = {
     principal_id = "00000000-0000-0000-0000-000000000000"
   }

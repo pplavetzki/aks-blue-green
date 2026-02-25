@@ -11,8 +11,7 @@ locals {
   location_short = local.region_vars.locals.location_short
   common_tags    = local.env_vars.locals.common_tags
   
-  # TODO: Replace with your deployment IP - get via: curl ifconfig.me
-  deployment_ip = local.env_vars.locals.deploymente_id
+  deployment_ip = local.env_vars.locals.deployment_ip
 }
 
 terraform {
@@ -37,7 +36,7 @@ dependency "network" {
       "snet-aks-slot1-system" = "/subscriptions/mock/resourceGroups/mock/providers/Microsoft.Network/virtualNetworks/mock/subnets/mock"
     }
   }
-  mock_outputs_allowed_terraform_commands = ["destroy", "plan", "apply"]
+  mock_outputs_allowed_terraform_commands = ["destroy", "plan"]
 }
 
 inputs = {
